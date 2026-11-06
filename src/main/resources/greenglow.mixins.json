@@ -1,0 +1,13 @@
+{
+  "required": true,
+  "package": "pl.adixuyt.greenglow.mixin",
+  "compatibilityLevel": "JAVA_21",
+  "client": [
+    "ItemRendererMixin",
+    "SkyRenderingMixin",
+    "WorldRendererSkyMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}
