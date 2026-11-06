@@ -4,7 +4,8 @@
   "compatibilityLevel": "JAVA_21",
   "client": [
     "ItemRendererMixin",
-    "SkyRenderingMixin"
+    "SkyRenderingMixin",
+    "WorldRendererSkyMixin"
   ],
   "injectors": {
     "defaultRequire": 1
