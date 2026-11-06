@@ -1,0 +1,25 @@
+{
+  "schemaVersion": 1,
+  "id": "greenglow",
+  "version": "${version}",
+  "name": "GreenGlow",
+  "description": "Green neon visual effects for Minecraft 1.21.4.",
+  "authors": [
+    "Adixu_YT"
+  ],
+  "environment": "client",
+  "entrypoints": {
+    "client": [
+      "pl.adixuyt.greenglow.GreenGlowClient"
+    ]
+  },
+  "depends": {
+    "fabricloader": ">=0.16.0",
+    "minecraft": "~1.21.4",
+    "java": ">=21",
+    "fabric-api": "*"
+  },
+  "mixins": [
+    "greenglow.mixins.json"
+  ]
+}
