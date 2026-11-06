@@ -4,7 +4,9 @@
   "version": "${version}",
   "name": "GreenGlow",
   "description": "Green neon visual effects for Minecraft 1.21.4.",
-  "authors": ["Adixu_YT"],
+  "authors": [
+    "Adixu_YT"
+  ],
   "environment": "client",
   "entrypoints": {
     "client": [
@@ -16,5 +18,8 @@
     "minecraft": "~1.21.4",
     "java": ">=21",
     "fabric-api": "*"
-  }
+  },
+  "mixins": [
+    "greenglow.mixins.json"
+  ]
 }
