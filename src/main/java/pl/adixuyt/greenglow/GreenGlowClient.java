@@ -1,6 +1,7 @@
 package pl.adixuyt.greenglow;
 
 import net.fabricmc.api.ClientModInitializer;
+import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderContext;
 import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderEvents;
 import net.minecraft.client.MinecraftClient;
@@ -12,6 +13,10 @@ import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.util.math.Box;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
+
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
 
 /**
  * Client-only GreenGlow world effects. No player/entity outlines, names,
@@ -27,9 +32,60 @@ public final class GreenGlowClient implements ClientModInitializer {
     private static final float GREEN_G = 1.0f;
     private static final float GREEN_B = 0.24f;
 
+    private static final List<LandingWave> LANDING_WAVES = new ArrayList<>();
+    private static final long LANDING_WAVE_LIFETIME_NANOS = 1_000_000_000L;
+    private static final float MIN_LANDING_FALL_DISTANCE = 0.85f;
+    private static World trackedWorld;
+    private static boolean wasOnGround = true;
+    private static float maximumFallDistance;
+
+    private record LandingWave(double x, double z, double groundY, long startedAtNanos) {}
+
     @Override
     public void onInitializeClient() {
+        ClientTickEvents.END_CLIENT_TICK.register(GreenGlowClient::trackPlayerLanding);
         WorldRenderEvents.AFTER_ENTITIES.register(GreenGlowClient::renderWorldGeometry);
+    }
+
+    private static void trackPlayerLanding(MinecraftClient client) {
+        if (client.player == null || client.world == null) {
+            trackedWorld = null;
+            wasOnGround = true;
+            maximumFallDistance = 0.0f;
+            LANDING_WAVES.clear();
+            return;
+        }
+
+        if (trackedWorld != client.world) {
+            trackedWorld = client.world;
+            wasOnGround = client.player.isOnGround();
+            maximumFallDistance = 0.0f;
+            LANDING_WAVES.clear();
+            return;
+        }
+
+        boolean onGround = client.player.isOnGround();
+        if (!onGround) {
+            maximumFallDistance = Math.max(maximumFallDistance, client.player.fallDistance);
+            wasOnGround = false;
+        } else {
+            if (!wasOnGround && maximumFallDistance >= MIN_LANDING_FALL_DISTANCE) {
+                LANDING_WAVES.add(new LandingWave(
+                        client.player.getX(), client.player.getZ(),
+                        client.player.getY() + 0.035, System.nanoTime()
+                ));
+            }
+            wasOnGround = true;
+            maximumFallDistance = 0.0f;
+        }
+
+        long now = System.nanoTime();
+        Iterator<LandingWave> iterator = LANDING_WAVES.iterator();
+        while (iterator.hasNext()) {
+            if (now - iterator.next().startedAtNanos() > LANDING_WAVE_LIFETIME_NANOS) {
+                iterator.remove();
+            }
+        }
     }
 
     private static void renderWorldGeometry(WorldRenderContext context) {
@@ -88,6 +144,7 @@ public final class GreenGlowClient implements ClientModInitializer {
             renderAurora(lines, matrices.peek(), player);
         }
 
+        renderLandingWaves(lines, matrices.peek(), System.nanoTime());
         matrices.pop();
     }
 
@@ -158,6 +215,50 @@ public final class GreenGlowClient implements ClientModInitializer {
                 float alpha = 0.19f * Math.max(0.0f, envelope);
                 drawLine(lines, entry, x0, y0, z0, x1, y1, z1, alpha);
             }
+        }
+    }
+
+    /**
+     * A splash-like impact: three bright green ripples expand from the
+     * landing point, sit just above the ground, and fade away quickly.
+     */
+    private static void renderLandingWaves(VertexConsumer lines, MatrixStack.Entry entry, long now) {
+        final int segments = 80;
+        final long delay = 105_000_000L;
+        final long duration = 690_000_000L;
+
+        for (LandingWave landing : LANDING_WAVES) {
+            long age = now - landing.startedAtNanos();
+            for (int ring = 0; ring < 3; ring++) {
+                long ringAge = age - ring * delay;
+                if (ringAge < 0 || ringAge >= duration) continue;
+
+                double progress = (double) ringAge / duration;
+                double eased = 1.0 - (1.0 - progress) * (1.0 - progress);
+                double radius = 0.18 + eased * 3.15;
+                double lift = 0.025 + Math.sin(progress * Math.PI) * 0.085 + ring * 0.008;
+                float alpha = (float) ((1.0 - progress) * (0.88 + 0.12 * Math.sin(progress * Math.PI * 2.0)));
+
+                drawGroundRing(lines, entry, landing, radius + 0.075, lift, alpha * 0.18f, segments);
+                drawGroundRing(lines, entry, landing, radius + 0.030, lift, alpha * 0.48f, segments);
+                drawGroundRing(lines, entry, landing, radius, lift, alpha * 0.96f, segments);
+            }
+        }
+    }
+
+    private static void drawGroundRing(
+            VertexConsumer lines, MatrixStack.Entry entry, LandingWave landing,
+            double radius, double lift, float alpha, int segments
+    ) {
+        for (int segment = 0; segment < segments; segment++) {
+            double a0 = Math.PI * 2.0 * segment / segments;
+            double a1 = Math.PI * 2.0 * (segment + 1) / segments;
+            double x0 = landing.x() + Math.cos(a0) * radius;
+            double z0 = landing.z() + Math.sin(a0) * radius;
+            double x1 = landing.x() + Math.cos(a1) * radius;
+            double z1 = landing.z() + Math.sin(a1) * radius;
+            double y = landing.groundY() + lift;
+            drawLine(lines, entry, x0, y, z0, x1, y, z1, alpha);
         }
     }
 
