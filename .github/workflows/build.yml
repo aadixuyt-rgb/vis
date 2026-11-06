@@ -28,9 +28,19 @@ jobs:
           gradle-version: '8.12'
       - name: Build mod
         run: gradle --no-daemon clean build
-      - name: Upload mod JAR
+      - name: Verify Fabric metadata is inside the mod JAR
+        shell: bash
+        run: |
+          mod_jar="$(find build/libs -maxdepth 1 -name 'GreenGlow-*.jar' ! -name '*-sources.jar' ! -name '*-dev.jar' | head -n 1)"
+          test -n "$mod_jar"
+          jar tf "$mod_jar" | grep -qx 'fabric.mod.json'
+          jar tf "$mod_jar" | grep -qx 'greenglow.mixins.json'
+      - name: Upload installable mod JAR
         uses: actions/upload-artifact@v4
         with:
           name: GreenGlow-${{ github.sha }}
-          path: build/libs/*.jar
+          path: |
+            build/libs/GreenGlow-*.jar
+            !build/libs/*-sources.jar
+            !build/libs/*-dev.jar
           if-no-files-found: error
