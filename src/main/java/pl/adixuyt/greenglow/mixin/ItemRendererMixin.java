@@ -17,7 +17,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 /**
- * Adds a separate green outline pass after the normal item model is rendered.
+ * Adds a green outline and animated expanding wave rings after item rendering.
  * The original model, texture, tint, and resource-pack assets are untouched.
  */
 @Mixin(ItemRenderer.class)
@@ -37,7 +37,7 @@ public abstract class ItemRendererMixin {
             int seed,
             CallbackInfo ci
     ) {
-        greenglow$drawOutline(matrices, consumers);
+        greenglow$drawOutlineAndWaves(matrices, consumers);
     }
 
     @Inject(
@@ -57,21 +57,40 @@ public abstract class ItemRendererMixin {
             int seed,
             CallbackInfo ci
     ) {
-        greenglow$drawOutline(matrices, consumers);
+        greenglow$drawOutlineAndWaves(matrices, consumers);
     }
 
-    private static void greenglow$drawOutline(MatrixStack matrices, VertexConsumerProvider consumers) {
-        if (consumers == null) {
+    private static void greenglow$drawOutlineAndWaves(MatrixStack matrices, VertexConsumerProvider consumers) {
+        if (consumers == null || matrices == null) {
             return;
         }
 
         VertexConsumer lines = consumers.getBuffer(RenderLayer.getLines());
         Box outline = new Box(-0.53, -0.53, -0.53, 0.53, 0.53, 0.53);
 
-        // Subtle outer pass plus a crisp green edge; original item texture is untouched.
+        // Crisp green outline around the rendered item.
         VertexRendering.drawBox(matrices, lines, outline.expand(0.025),
                 0.08f, 1.0f, 0.22f, 0.28f);
         VertexRendering.drawBox(matrices, lines, outline,
                 0.10f, 1.0f, 0.28f, 0.95f);
+
+        // Three animated square wavefronts expand outward from the item.
+        // This is an additional pass: resource-pack models and textures stay intact.
+        double cycle = (System.nanoTime() / 1_000_000L % 1800L) / 1800.0;
+        for (int i = 0; i < 3; i++) {
+            double phase = (cycle + i / 3.0) % 1.0;
+            double radius = 0.58 + phase * 0.78;
+            float alpha = (float) (0.82 * (1.0 - phase));
+            Box wave = new Box(
+                    -radius, -0.49 - phase * 0.025, -radius,
+                    radius, -0.49 + phase * 0.025, radius
+            );
+
+            // A soft outer line and a sharper inner line create a neon-like pulse.
+            VertexRendering.drawBox(matrices, lines, wave.expand(0.018, 0.0, 0.018),
+                    0.04f, 1.0f, 0.18f, alpha * 0.30f);
+            VertexRendering.drawBox(matrices, lines, wave,
+                    0.08f, 1.0f, 0.24f, alpha);
+        }
     }
 }
