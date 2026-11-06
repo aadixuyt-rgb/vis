@@ -2,12 +2,14 @@
 
 Client-side Fabric mod project for **Minecraft Java 1.21.4**.
 
-## Planned visual features
+## Visual effect
 
-- Repeated, equal-sized 3D rectangular outlines distributed through the world.
-- Green outlines with a soft neon glow; transparent interiors.
-- Green glow on the held sword and thumbs-up/hand visual shown in the reference.
-- No labels, icons, extra HUD, or GUI.
+- Repeated 3D rectangular outlines distributed around the player.
+- Neon-green edges with a subtle green outer pass.
+- Transparent interiors.
+- No blue tint, player highlighting, names, labels, extra HUD, or GUI.
+
+The current implementation is an initial rendering pass. Check it in Minecraft and adjust the spacing, size, and glow strength based on the result.
 
 ## Development setup
 
@@ -19,20 +21,10 @@ Client-side Fabric mod project for **Minecraft Java 1.21.4**.
 
 ## Build
 
-After opening the project in IntelliJ IDEA (or another Gradle IDE), run:
+Run:
 
 ```bash
-./gradlew build
+gradle build
 ```
 
-On Windows:
-
-```bat
-gradlew.bat build
-```
-
-The built mod JAR will be in `build/libs/`.
-
-## Note
-
-This is the upload-ready source project scaffold. The rendering/effect implementation still needs to be added and tested in Minecraft before it can produce a working mod JAR.
+The built mod JAR will be in `build/libs/`. GitHub Actions also builds the project on every push and uploads the JAR as an artifact.
