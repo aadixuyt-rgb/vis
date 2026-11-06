@@ -3,7 +3,8 @@
   "package": "pl.adixuyt.greenglow.mixin",
   "compatibilityLevel": "JAVA_21",
   "client": [
-    "ItemRendererMixin"
+    "ItemRendererMixin",
+    "SkyRenderingMixin"
   ],
   "injectors": {
     "defaultRequire": 1
