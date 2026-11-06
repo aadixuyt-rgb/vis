@@ -1,15 +1,16 @@
 # GreenGlow
 
-Client-side Fabric mod project for **Minecraft Java 1.21.4**.
+Client-side Fabric visual mod for **Minecraft Java 1.21.4**.
 
-## Visual effect
+## Visual effects
 
-- Repeated 3D rectangular outlines distributed around the player.
-- Neon-green edges with a subtle green outer pass.
-- Transparent interiors.
-- No blue tint, player highlighting, names, labels, extra HUD, or GUI.
+- Black Overworld sky with animated green aurora-style ribbons.
+- Repeated 3D rectangular outlines around the player, with neon-green edges.
+- Animated circular green wavefronts around rendered items in the world, in the local player's hand, and in GUI item slots.
+- Original item models, tinting, and Resource Pack textures remain in use.
+- No blue tint, player/entity highlighting, names, labels, extra HUD, or GUI.
 
-The current implementation is an initial rendering pass. Check it in Minecraft and adjust the spacing, size, and glow strength based on the result.
+The effects are a custom client-side rendering approximation. Their final appearance and compatibility with other rendering/resource-pack mods should be checked in Minecraft.
 
 ## Development setup
 
